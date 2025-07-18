@@ -4,6 +4,10 @@ import { useAppDispatch, useAppSelector } from '../../hooks/useAppSelector';
 import { register as registerAction } from '../../store/slices/authSlice';
 import { Eye, EyeOff, Mail, Lock, User, TrendingUp } from 'lucide-react';
 import { registerUser } from '../../api/auth'; 
+import { GoogleLogin, googleLogout } from '@react-oauth/google';
+import { jwtDecode } from 'jwt-decode';
+import axios from 'axios'
+
 
 interface RegisterFormData {
   name: string;
@@ -201,6 +205,34 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
             >
               {loading ? 'Creating account...' : 'Create account'}
             </button>
+
+            <div className="w-full flex items-center justify-center my-4">
+              <div className="border-t border-gray-300 w-full"></div>
+              <span className="mx-2 text-gray-500 text-sm">or</span>
+              <div className="border-t border-gray-300 w-full"></div>
+            </div>
+
+            <GoogleLogin
+              onSuccess={async credentialResponse => {
+                try {
+                  const { data } = await axios.post('/api/auth/google', {
+                    credential: credentialResponse.credential,
+                  });
+
+                  dispatch(registerAction({
+                    user: data,
+                    token: data.token,
+                  }));
+                } catch (err) {
+                  console.error('Google login failed', err);
+                  alert('Google login failed');
+                }
+              }}
+              onError={() => {
+                console.error('Google Login Failed');
+                alert('Google Login Failed');
+              }}
+            />
           </div>
 
           <div className="text-center">

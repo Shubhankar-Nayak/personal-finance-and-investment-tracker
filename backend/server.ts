@@ -15,14 +15,13 @@ connectDB();
 const app = express();
 
 app.use(cors({
-  origin: 'http://localhost:5173', // Replace with your frontend origin
-  credentials: true, // if you send cookies or auth headers
+  origin: 'http://localhost:5173', 
+  credentials: true, 
 }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }))
 
-// Add routes here
 
 const PORT = process.env.PORT || 5000;
 
