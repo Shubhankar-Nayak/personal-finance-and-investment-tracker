@@ -1,9 +1,19 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { Transaction } from '../models/Transaction';
+import { UserDocument } from '../models/User';
 
-// Use the extended Request type
-export const getTransactions = async (req: Request, res: Response) => {
-  const userId = req.user._id; 
+import { Request } from 'express';
+
+interface AuthenticatedRequest extends Request {
+  user?: UserDocument;
+}
+
+export const getTransactions = async (req: AuthenticatedRequest, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+
+  const userId = req.user._id;
   try {
     const transactions = await Transaction.find({ userId });
     res.json(transactions);
@@ -12,8 +22,12 @@ export const getTransactions = async (req: Request, res: Response) => {
   }
 };
 
-export const addTransaction = async (req: Request, res: Response) => {
-  const userId = req.user._id; // No more error here
+export const addTransaction = async (req: AuthenticatedRequest, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+
+  const userId = req.user._id;
   try {
     const newTx = await Transaction.create({ ...req.body, userId });
     res.status(201).json(newTx);

@@ -2,14 +2,14 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "CommonJS",
-    "rootDir": "",
     "outDir": "dist",
     "strict": true,
     "moduleResolution": "node",
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "typeRoots": ["./node_modules/@types", "./types"]
   },
-  "include": ["server.ts"],
+  "include": ["server.ts", "types", "controllers", "models", "middleware", "routes"],
   "exclude": ["node_modules", "dist"]
 }

@@ -1,12 +1,18 @@
+import { Response, Request } from 'express';
 import { OAuth2Client } from 'google-auth-library';
 import { User } from '../models/User';
 import jwt from 'jsonwebtoken';
-import bcrypt from 'bcryptjs'; // Assuming you're using bcrypt
+import bcrypt from 'bcryptjs'; 
+import { UserDocument } from '../models/User';
+
+interface AuthenticatedRequest extends Request {
+  user?: UserDocument;
+}
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Existing Google Login
-export const googleLogin = async (req, res) => {
+export const googleLogin = async (req: AuthenticatedRequest, res: Response) => {
   const { credential } = req.body;
 
   try {
@@ -15,7 +21,13 @@ export const googleLogin = async (req, res) => {
       audience: process.env.GOOGLE_CLIENT_ID,
     });
 
-    const { email, name, sub: googleId } = ticket.getPayload();
+    const payload = ticket.getPayload();
+
+    if (!payload) {
+      return res.status(401).json({ message: 'Invalid Google token payload' });
+    }
+
+    const { email, name, sub: googleId } = payload;
 
     let user = await User.findOne({ $or: [{ email }, { googleId }] });
 
@@ -23,7 +35,7 @@ export const googleLogin = async (req, res) => {
       user = await User.create({ email, name, googleId });
     }
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET as string, { expiresIn: '30d' });
 
     res.json({
       _id: user._id,
@@ -38,7 +50,7 @@ export const googleLogin = async (req, res) => {
 };
 
 // New Email/Password Login
-export const loginUser = async (req, res) => {
+export const loginUser = async (req: AuthenticatedRequest, res: Response) => {
   const { email, password } = req.body;
 
   const user = await User.findOne({ email });
@@ -60,7 +72,7 @@ export const loginUser = async (req, res) => {
     return res.status(401).json({ message: 'Invalid credentials' });
   }
 
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET as string, {
     expiresIn: '30d',
   });
 

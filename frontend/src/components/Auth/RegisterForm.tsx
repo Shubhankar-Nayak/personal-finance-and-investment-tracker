@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { useAppDispatch, useAppSelector } from '../../hooks/useAppSelector';
 import { register as registerAction } from '../../store/slices/authSlice';
 import { Eye, EyeOff, Mail, Lock, User, TrendingUp } from 'lucide-react';
+import { registerUser } from '../../api/auth'; 
 
 interface RegisterFormData {
   name: string;
@@ -26,17 +27,17 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
   const password = watch('password');
 
   const onSubmit = async (data: RegisterFormData) => {
-    // Simulate API call
-    setTimeout(() => {
-      const mockUser = {
-        id: '1',
-        email: data.email,
+    try {
+      const { user, token } = await registerUser({
         name: data.name,
-      };
-      const mockToken = 'mock-jwt-token';
-      
-      dispatch(registerAction({ user: mockUser, token: mockToken }));
-    }, 1000);
+        email: data.email,
+        password: data.password,
+      });
+      dispatch(registerAction({ user, token }));
+    } catch (error: any) {
+      console.error('Registration error:', error.response?.data?.message || error.message);
+      alert(error.response?.data?.message || 'Registration failed');
+    }
   };
 
   return (

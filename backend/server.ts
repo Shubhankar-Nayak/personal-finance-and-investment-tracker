@@ -1,6 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import connectDB from './config/db';
+import cors from 'cors';
 
 import transactionRoutes from './routes/transactionRoutes';
 import investmentRoutes from './routes/investmentRoutes';
@@ -12,6 +13,12 @@ dotenv.config();
 connectDB();
 
 const app = express();
+
+app.use(cors({
+  origin: 'http://localhost:5173', // Replace with your frontend origin
+  credentials: true, // if you send cookies or auth headers
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }))
 

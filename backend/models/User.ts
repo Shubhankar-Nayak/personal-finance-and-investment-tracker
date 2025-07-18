@@ -1,5 +1,13 @@
-import mongoose from 'mongoose';
+import mongoose, { Document, Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
+
+export type UserDocument = Document & {
+  name: string;
+  email: string;
+  password: string;
+  googleId?: string;
+  matchPassword: (password: string) => Promise<boolean>;
+};
 
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -11,7 +19,7 @@ const userSchema = new mongoose.Schema({
 });
 
 // Match entered password with hashed password
-userSchema.methods.matchPassword = async function (enteredPassword) {
+userSchema.methods.matchPassword = async function (enteredPassword: string) {
   if (!this.password) return false; // No password set (Google login)
   return await bcrypt.compare(enteredPassword, this.password);
 };
@@ -24,4 +32,5 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-export const User = mongoose.model('User', userSchema);
+export const User = mongoose.model<UserDocument>('User', userSchema);
+
