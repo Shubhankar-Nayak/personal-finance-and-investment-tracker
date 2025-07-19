@@ -1,8 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useAppDispatch, useAppSelector } from '../../hooks/useAppSelector';
-import { loginStart, loginSuccess } from '../../store/slices/authSlice';
+import { loginStart, loginSuccess, loginFailure } from '../../store/slices/authSlice';
 import { Eye, EyeOff, Mail, Lock, TrendingUp } from 'lucide-react';
+import axios from 'axios';
+import { GoogleLogin } from '@react-oauth/google';
+
+declare global {
+  interface Window {
+    google: any;
+  }
+}
 
 interface LoginFormData {
   email: string;
@@ -22,20 +30,52 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>();
 
   const onSubmit = async (data: LoginFormData) => {
-    dispatch(loginStart());
-    
-    // Simulate API call
-    setTimeout(() => {
-      const mockUser = {
-        id: '1',
-        email: data.email,
-        name: data.email.split('@')[0],
-      };
-      const mockToken = 'mock-jwt-token';
-      
-      dispatch(loginSuccess({ user: mockUser, token: mockToken }));
-    }, 1000);
+    try {
+      dispatch(loginStart());
+
+      const response = await axios.post('/api/auth/login', data);
+
+      const { user, token } = response.data;
+
+      dispatch(loginSuccess({ user, token }));
+    } catch (error: any) {
+      console.error('Login failed:', error);
+      dispatch(loginFailure());
+    }
   };
+
+  useEffect(() => {
+    if (window.google) {
+      window.google.accounts.id.initialize({
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+        callback: async (response: any) => {
+          try {
+            dispatch(loginStart());
+            const res = await axios.post('/api/auth/google', {
+              credential: response.credential,
+            });
+
+            const { token, _id, name, email } = res.data;
+            const user = { id: _id, name, email };
+            dispatch(loginSuccess({ user, token }));
+          } catch (err) {
+            console.error('Google login failed', err);
+            dispatch(loginFailure());
+          }
+        },
+      });
+
+      window.google.accounts.id.renderButton(
+        document.getElementById('google-signin-btn')!,
+        {
+          theme: darkMode ? 'filled_black' : 'outline',
+          size: 'large',
+          shape: 'pill',
+          text: 'continue_with',
+        }
+      );
+    }
+  }, [dispatch, darkMode]);
 
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -50,6 +90,14 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
           <p className={`mt-2 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
             Sign in to your account to continue
           </p>
+        </div>
+
+        <div id="google-signin-btn" className="flex justify-center" />
+
+        <div className="flex items-center justify-center space-x-4 my-4">
+          <hr className="w-1/4 border-gray-300" />
+          <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>OR</span>
+          <hr className="w-1/4 border-gray-300" />
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
