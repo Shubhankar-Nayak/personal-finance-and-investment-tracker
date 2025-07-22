@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '../../hooks/useAppSelector';
-import { deleteTransaction, setFilters, Transaction } from '../../store/slices/transactionSlice';
+import { deleteTransaction, fetchTransactions, setFilters, Transaction } from '../../store/slices/transactionSlice';
 import { Plus, Search, Filter, Edit, Trash2, TrendingUp, TrendingDown } from 'lucide-react';
 import TransactionForm from './TransactionForm';
 
@@ -11,6 +11,10 @@ const TransactionList: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    dispatch(fetchTransactions());
+  }, [dispatch]);
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter(transaction => {
@@ -33,6 +37,7 @@ const TransactionList: React.FC = () => {
   const handleDelete = (id: string) => {
     if (window.confirm('Are you sure you want to delete this transaction?')) {
       dispatch(deleteTransaction(id));
+      dispatch(fetchTransactions());
     }
   };
 

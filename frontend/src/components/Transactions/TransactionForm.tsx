@@ -1,7 +1,7 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { useAppDispatch, useAppSelector } from '../../hooks/useAppSelector';
-import { addTransaction, updateTransaction, addCategory, Transaction } from '../../store/slices/transactionSlice';
+import { fetchTransactions, createTransaction, updateTransaction, addCategory, Transaction } from '../../store/slices/transactionSlice';
 import { ArrowLeft, Save, DollarSign, Calendar, Tag, FileText } from 'lucide-react';
 
 interface TransactionFormData {
@@ -38,25 +38,19 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ transaction, onClose 
     }
   });
 
-  const watchedType = watch('type');
 
   const onSubmit = (data: TransactionFormData) => {
-    if (transaction) {
+    if (transaction?._id) {
       dispatch(updateTransaction({
-        ...transaction,
+        id: transaction._id,
+        createdAt: transaction.createdAt,
         ...data,
       }));
     } else {
-      dispatch(addTransaction(data));
+      dispatch(createTransaction(data));
     }
+    dispatch(fetchTransactions());
     onClose();
-  };
-
-  const handleAddCategory = (newCategory: string) => {
-    if (newCategory && !categories.includes(newCategory)) {
-      dispatch(addCategory(newCategory));
-      setValue('category', newCategory);
-    }
   };
 
   return (
