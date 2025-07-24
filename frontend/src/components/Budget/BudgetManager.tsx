@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '../../hooks/useAppSelector';
-import { setBudget, deleteBudget, setCurrentMonth } from '../../store/slices/budgetSlice';
+import {createBudget, updateBudget, fetchBudget, deleteBudget, setCurrentMonth } from '../../store/slices/budgetSlice';
 import { Plus, Target, AlertTriangle, Edit, Trash2, Calendar } from 'lucide-react';
 
 const BudgetManager: React.FC = () => {
@@ -11,6 +11,10 @@ const BudgetManager: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingBudget, setEditingBudget] = useState<string>('');
   const [formData, setFormData] = useState({ category: '', limit: 0 });
+
+  useEffect(() => {
+    dispatch(fetchBudget());
+  }, [currentMonth, dispatch]);
 
   const currentMonthBudgets = useMemo(() => {
     return budgets.filter(b => b.month === currentMonth);
@@ -28,17 +32,32 @@ const BudgetManager: React.FC = () => {
     return spent;
   }, [transactions, currentMonth]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (formData.category && formData.limit > 0) {
-      dispatch(setBudget({
+      const payload = {
         category: formData.category,
-        limit: formData.limit,
-        month: currentMonth,
-      }));
-      setFormData({ category: '', limit: 0 });
-      setEditingBudget('');
-      setShowForm(false);
+        amount: formData.limit,
+        period: 'monthly', 
+        startDate: new Date(`${currentMonth}-01`),
+        endDate: new Date(`${currentMonth}-31`),
+      };
+
+      try {
+        if (editingBudget) {
+          await dispatch(updateBudget({ id: editingBudget, ...payload })).unwrap();
+        } else {
+          await dispatch(createBudget(payload)).unwrap();
+        }
+
+        await dispatch(fetchBudget()).unwrap();
+        setFormData({ category: '', limit: 0 });
+        setEditingBudget('');
+        setShowForm(false);
+      } catch (err) {
+        console.error('Budget submission failed:', err);
+      }
     }
   };
 
@@ -51,6 +70,7 @@ const BudgetManager: React.FC = () => {
   const handleDelete = (id: string) => {
     if (window.confirm('Are you sure you want to delete this budget?')) {
       dispatch(deleteBudget(id));
+      dispatch(fetchBudget());
     }
   };
 

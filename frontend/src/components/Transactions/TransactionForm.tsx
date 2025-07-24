@@ -22,7 +22,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ transaction, onClose 
   const { categories } = useAppSelector(state => state.transactions);
   const { darkMode } = useAppSelector(state => state.ui);
 
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<TransactionFormData>({
+  const { register, handleSubmit, formState: { errors } } = useForm<TransactionFormData>({
     defaultValues: transaction ? {
       type: transaction.type,
       amount: transaction.amount,
