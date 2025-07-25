@@ -46,6 +46,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ transaction, onClose 
         createdAt: transaction.createdAt,
         ...data,
       }));
+      dispatch(fetchTransactions());
     } else {
       dispatch(createTransaction(data));
     }

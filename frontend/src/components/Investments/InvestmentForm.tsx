@@ -1,7 +1,7 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { useAppDispatch, useAppSelector } from '../../hooks/useAppSelector';
-import { addInvestment, updateInvestment, Investment } from '../../store/slices/investmentSlice';
+import { fetchInvestments, createInvestment, updateInvestment, Investment } from '../../store/slices/investmentSlice';
 import { ArrowLeft, Save, DollarSign, Calendar, TrendingUp, Hash, FileText } from 'lucide-react';
 
 interface InvestmentFormData {
@@ -44,14 +44,17 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({ investment, onClose }) 
   });
 
   const onSubmit = (data: InvestmentFormData) => {
-    if (investment) {
+    if (investment?._id) {
       dispatch(updateInvestment({
-        ...investment,
+        id: investment._id,
+        createdAt: investment.createdAt,
         ...data,
       }));
+      dispatch(fetchInvestments());
     } else {
-      dispatch(addInvestment(data));
+      dispatch(createInvestment(data));
     }
+    dispatch(fetchInvestments());
     onClose();
   };
 

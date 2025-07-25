@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../hooks/useAppSelector';
-import { deleteInvestment, Investment } from '../../store/slices/investmentSlice';
+import { deleteInvestment, fetchInvestments, Investment } from '../../store/slices/investmentSlice';
 import { Plus, TrendingUp, TrendingDown, Edit, Trash2, DollarSign } from 'lucide-react';
 import InvestmentForm from './InvestmentForm';
 
@@ -10,6 +10,10 @@ const InvestmentList: React.FC = () => {
   const { darkMode } = useAppSelector(state => state.ui);
   const [showForm, setShowForm] = useState(false);
   const [editingInvestment, setEditingInvestment] = useState<Investment | null>(null);
+
+  useEffect(() => {
+    dispatch(fetchInvestments());
+  }, [dispatch]);
 
   const portfolioData = useMemo(() => {
     const totalValue = investments.reduce((sum, inv) => sum + (inv.quantity * inv.currentPrice), 0);
@@ -33,6 +37,7 @@ const InvestmentList: React.FC = () => {
   const handleDelete = (id: string) => {
     if (window.confirm('Are you sure you want to delete this investment?')) {
       dispatch(deleteInvestment(id));
+      dispatch(fetchInvestments());
     }
   };
 
