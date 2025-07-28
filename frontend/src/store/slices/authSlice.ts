@@ -61,7 +61,12 @@ const authSlice = createSlice({
       state.loading = true;
     },
     loginSuccess: (state, action: PayloadAction<{ user: User; token: string }>) => {
-      state.user = action.payload.user;
+      state.user = {
+        id: action.payload.user.id,
+        email: action.payload.user.email,
+        name: action.payload.user.name,
+        hasPassword: action.payload.user.hasPassword ?? false,
+      };
       state.token = action.payload.token;
       state.isAuthenticated = true;
       state.loading = false;
@@ -77,7 +82,12 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
     },
     register: (state, action: PayloadAction<{ user: User; token: string }>) => {
-      state.user = action.payload.user;
+      state.user = {
+        id: action.payload.user.id,
+        email: action.payload.user.email,
+        name: action.payload.user.name,
+        hasPassword: action.payload.user.hasPassword ?? false, 
+      };
       state.token = action.payload.token;
       state.isAuthenticated = true;
       state.loading = false;

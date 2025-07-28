@@ -29,6 +29,7 @@ export const registerUser = async (req: AuthenticatedRequest, res: Response) => 
         id: user._id,
         name: user.name,
         email: user.email,
+        hasPassword: !!user.password,
       },
       token: generateToken(user._id.toString()),
     });
@@ -41,7 +42,7 @@ export const loginUser = async (req: AuthenticatedRequest, res: Response) => {
 
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select('+password');
     
     if (!user || !user.password) {
       return res.status(400).json({ message: 'Invalid email or password' });
@@ -59,6 +60,7 @@ export const loginUser = async (req: AuthenticatedRequest, res: Response) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        hasPassword: !!user.password,
       },
     });
   } catch (err) {
@@ -97,24 +99,25 @@ export const setPassword = async (req: AuthenticatedRequest, res: Response) => {
 };
 
 export const changePassword = async (req: AuthenticatedRequest, res: Response) => {
-  if (!req.user) {
-    return res.status(401).json({ message: 'Unauthorized' });
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    const user = await User.findById(req.user?.id).select('+password');
+    if (!user || !user.password) {
+      return res.status(400).json({ message: 'Invalid request' });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Incorrect current password' });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({ message: 'Password updated successfully' });
+  } catch (err) {
+    console.error('Error changing password:', err);
+    res.status(500).json({ message: 'Server error' });
   }
-  const user = req.user;
-
-  const { currentPassword, newPassword } = req.body;
-
-  const isMatch = await bcrypt.compare(currentPassword, user.password);
-  if (!isMatch) {
-    return res.status(400).json({ message: 'Incorrect current password' });
-  }
-
-  if (!newPassword || newPassword.length < 8) {
-    return res.status(400).json({ message: 'New password must be at least 8 characters' });
-  }
-
-  user.password = newPassword;
-  await user.save();
-
-  res.status(200).json({ message: 'Password updated successfully' });
 };

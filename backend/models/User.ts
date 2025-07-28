@@ -12,7 +12,7 @@ export type UserDocument = Document & {
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
-  password: { type: String }, // Optional for Google users
+  password: { type: String, select: false }, // Optional for Google users
   googleId: { type: String }, // Present if signed up via Google
 }, {
   timestamps: true,
