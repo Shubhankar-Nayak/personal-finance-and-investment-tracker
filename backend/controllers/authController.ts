@@ -38,10 +38,9 @@ export const googleLogin = async (req: AuthenticatedRequest, res: Response) => {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET as string, { expiresIn: '30d' });
 
     res.json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
+      ...user.toObject(),
       token,
+      hasPassword: !!user.password,
     });
   } catch (err) {
     console.error(err);
@@ -77,9 +76,12 @@ export const loginUser = async (req: AuthenticatedRequest, res: Response) => {
   });
 
   res.json({
-    _id: user._id,
-    name: user.name,
-    email: user.email,
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+    },
     token,
+    hasPassword: !!user.password,
   });
 };

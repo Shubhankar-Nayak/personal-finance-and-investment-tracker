@@ -1,17 +1,65 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../hooks/useAppSelector';
 import { setDarkMode } from '../../store/slices/uiSlice';
 import { logout } from '../../store/slices/authSlice';
 import { Moon, Sun, User, Shield, Bell, Database, LogOut, Settings as SettingsIcon } from 'lucide-react';
+import axios from 'axios';
 
 const Settings: React.FC = () => {
   const dispatch = useAppDispatch();
   const { darkMode } = useAppSelector(state => state.ui);
   const { user } = useAppSelector(state => state.auth);
 
+  const [modalOpen, setModalOpen] = useState(false);
+  const [formState, setFormState] = useState({ currentPassword: '', newPassword: '' });
+  const [isSettingPassword, setIsSettingPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState<string | null>(null);
+
   const handleLogout = () => {
     if (window.confirm('Are you sure you want to log out?')) {
       dispatch(logout());
+    }
+  };
+
+  const handlePasswordClick = () => {
+    setIsSettingPassword(!user?.hasPassword);
+    setFormState({ currentPassword: '', newPassword: '' });
+    setModalOpen(true);
+    setFeedback(null);
+  };
+
+  const handleSubmit = async () => {
+    setLoading(true);
+    setFeedback(null);
+
+    try {
+      const root = JSON.parse(localStorage.getItem('persist:root') || '{}');
+      const parsedAuth = root.auth ? JSON.parse(root.auth) : null;
+      const token = parsedAuth?.token;
+
+      if (!token) throw new Error('You are not logged in.');
+
+      const endpoint = isSettingPassword ? 'set-password' : 'change-password';
+      const res = await fetch(`/api/user/${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(formState),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message || 'Password update failed');
+
+      setFeedback('Password updated successfully');
+      setModalOpen(false);
+    } catch (err: any) {
+      setFeedback(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -160,18 +208,68 @@ const Settings: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <h4 className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                Change Password
+                {user?.hasPassword ? 'Change Password' : 'Set Password'}
               </h4>
               <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Update your account password
+                {user?.hasPassword
+                    ? 'Update your account password'
+                    : 'Set a password for your Google account'}
               </p>
             </div>
-            <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200">
-              Change
+            <button
+              onClick={handlePasswordClick} 
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+            >
+              {user?.hasPassword ? 'Change' : 'Set'}
             </button>
           </div>
         </div>
       </SettingSection>
+
+      {/* Password Modal */}
+      {modalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl w-full max-w-md space-y-4 shadow-lg">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+              {isSettingPassword ? 'Set Password' : 'Change Password'}
+            </h3>
+            {!isSettingPassword && (
+              <input
+                type="password"
+                placeholder="Current password"
+                value={formState.currentPassword}
+                onChange={e => setFormState({ ...formState, currentPassword: e.target.value })}
+                className="w-full px-3 py-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-white"
+              />
+            )}
+            <input
+              type="password"
+              placeholder="New password"
+              value={formState.newPassword}
+              onChange={e => setFormState({ ...formState, newPassword: e.target.value })}
+              className="w-full px-3 py-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-white"
+            />
+            {feedback && (
+              <p className="text-sm text-red-500 dark:text-red-400">{feedback}</p>
+            )}
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setModalOpen(false)}
+                className="px-4 py-2 text-sm rounded-md hover:bg-gray-200 dark:hover:bg-gray-700"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={loading}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+              >
+                {loading ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Notifications Section */}
       <SettingSection

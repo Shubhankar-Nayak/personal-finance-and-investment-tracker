@@ -25,9 +25,11 @@ export const registerUser = async (req: AuthenticatedRequest, res: Response) => 
 
 
     res.status(201).json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      },
       token: generateToken(user._id.toString()),
     });
   } catch (err) {
@@ -36,29 +38,28 @@ export const registerUser = async (req: AuthenticatedRequest, res: Response) => 
 };
 
 export const loginUser = async (req: AuthenticatedRequest, res: Response) => {
-  const { email, password } = req.body;
-  
 
   try {
-    const foundUser = await User.findOne({ email });
-
-    if (!foundUser) return res.status(401).json({ message: 'Invalid credentials' });
-
-    const user = foundUser.toObject() as UserDocument & { _id: string };
-
-    const isMatch = await user?.matchPassword(password);
-
-    if (!user || !isMatch) return res.status(401).json({ message: 'Invalid credentials' });
-
-    if (!req.user) {
-      return res.status(401).json({ message: 'Unauthorized' });
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    
+    if (!user || !user.password) {
+      return res.status(400).json({ message: 'Invalid email or password' });
     }
 
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid email or password' });
+    }
+
+    const token = generateToken(String(user._id));
     res.json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      token: generateToken(user._id.toString()),
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      },
     });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
@@ -71,4 +72,49 @@ export const getMe = async (req: AuthenticatedRequest, res: Response) => {
   }
   const user = await User.findById(req.user._id).select('-password');
   res.json(user);
+};
+
+export const setPassword = async (req: AuthenticatedRequest, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+
+  const user = req.user;
+
+  if (user.password) {
+    return res.status(400).json({ message: 'Password already set' });
+  }
+
+  const { newPassword } = req.body;
+  if (!newPassword || newPassword.length < 8) {
+    return res.status(400).json({ message: 'Password must be at least 8 characters' });
+  }
+
+  user.password = newPassword;
+  await user.save();
+
+  res.status(200).json({ message: 'Password set successfully' });
+};
+
+export const changePassword = async (req: AuthenticatedRequest, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+  const user = req.user;
+
+  const { currentPassword, newPassword } = req.body;
+
+  const isMatch = await bcrypt.compare(currentPassword, user.password);
+  if (!isMatch) {
+    return res.status(400).json({ message: 'Incorrect current password' });
+  }
+
+  if (!newPassword || newPassword.length < 8) {
+    return res.status(400).json({ message: 'New password must be at least 8 characters' });
+  }
+
+  user.password = newPassword;
+  await user.save();
+
+  res.status(200).json({ message: 'Password updated successfully' });
 };

@@ -3,6 +3,8 @@ import {
   registerUser,
   loginUser,
   getMe,
+  setPassword,
+  changePassword
 } from '../controllers/userController';
 import { protect } from '../middleware/authMiddleware';
 
@@ -13,6 +15,9 @@ router.post('/register', registerUser);
 router.post('/login', loginUser);
 
 // Protected Route (Get current user)
-router.get('/me', protect, getMe);
+router.get('/me', getMe);
+
+router.post('/set-password', protect, setPassword);
+router.post('/change-password', protect, changePassword);
 
 export default router;

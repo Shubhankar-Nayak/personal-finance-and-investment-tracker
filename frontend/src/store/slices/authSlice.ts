@@ -1,9 +1,12 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import axios from 'axios';
+import { RootState } from '../store';
 
 interface User {
   id: string;
   email: string;
   name: string;
+  hasPassword?: boolean;
 }
 
 interface AuthState {
@@ -19,6 +22,36 @@ const initialState: AuthState = {
   isAuthenticated: false,
   loading: false,
 };
+
+export const setPassword = createAsyncThunk<
+  void,
+  { newPassword: string },
+  { state: RootState }
+>('auth/setPassword', async ({ newPassword }, { getState, rejectWithValue }) => {
+  try {
+    const token = getState().auth.token;
+    await axios.post('/api/user/set-password', { newPassword }, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch (error: any) {
+    return rejectWithValue(error.response?.data?.message || 'Failed to set password');
+  }
+});
+
+export const changePassword = createAsyncThunk<
+  void,
+  { currentPassword: string; newPassword: string },
+  { state: RootState }
+>('auth/changePassword', async ({ currentPassword, newPassword }, { getState, rejectWithValue }) => {
+  try {
+    const token = getState().auth.token;
+    await axios.post('/api/user/change-password', { currentPassword, newPassword }, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch (error: any) {
+    return rejectWithValue(error.response?.data?.message || 'Failed to change password');
+  }
+});
 
 const authSlice = createSlice({
   name: 'auth',
