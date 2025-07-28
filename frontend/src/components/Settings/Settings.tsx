@@ -63,6 +63,38 @@ const Settings: React.FC = () => {
     }
   };
 
+  const handleClearData = async () => {
+    if(!window.confirm('This will permanently delete all your data. Are you sure?')) return;
+
+    setLoading(true);
+    setFeedback(null);
+
+    try {
+      const root = JSON.parse(localStorage.getItem('persist:root') || '{}');
+      const parseAuth = root.auth ? JSON.parse(root.auth) : null;
+      const token = parseAuth?.token;
+
+      if (!token) throw new Error('You are not logged in.');
+
+      const res = await fetch('api/user/data', {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }, 
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message || 'Failed to clear data');
+
+      alert('Your data has been cleared successfully.');
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const SettingSection: React.FC<{
     title: string;
     description: string;
@@ -344,7 +376,10 @@ const Settings: React.FC = () => {
                 Permanently delete all your data
               </p>
             </div>
-            <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200">
+            <button
+            onClick={handleClearData}
+             className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200"
+            >
               Clear Data
             </button>
           </div>

@@ -3,6 +3,9 @@ import { User } from '../models/User';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { UserDocument } from '../models/User';
+import { Transaction } from '../models/Transaction';
+import { Budget } from '../models/Budget';
+import { Investment } from '../models/Investment';
 
 interface AuthenticatedRequest extends Request {
   user?: UserDocument;
@@ -119,5 +122,20 @@ export const changePassword = async (req: AuthenticatedRequest, res: Response) =
   } catch (err) {
     console.error('Error changing password:', err);
     res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const clearUserData = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?._id;
+
+    await Transaction.deleteMany({ userId: userId });
+    await Budget.deleteMany({ userId: userId });
+    await Investment.deleteMany({ userId: userId });
+
+    res.status(200).json({ message: 'All user data cleared successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to clear data' });
   }
 };
