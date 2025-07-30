@@ -95,6 +95,30 @@ const Settings: React.FC = () => {
     }
   };
 
+  const handleExportData = async () => {
+      const root = JSON.parse(localStorage.getItem('persist:root') || '{}');
+      const parseAuth = root.auth ? JSON.parse(root.auth) : null;
+      const token = parseAuth?.token;
+
+      if (!token) return alert('Not authenticated');
+
+      try {
+        const res = await axios.get('/api/user/export', {
+          headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        responseType: 'blob',
+      });
+
+      const blob = new Blob([res.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    } catch (err) {
+      console.error(err);
+      alert('Failed to export data');
+    }
+  };
+
   const SettingSection: React.FC<{
     title: string;
     description: string;
@@ -363,7 +387,10 @@ const Settings: React.FC = () => {
                 Download all your financial data
               </p>
             </div>
-            <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200">
+            <button
+              onClick={handleExportData} 
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+            >
               Export
             </button>
           </div>

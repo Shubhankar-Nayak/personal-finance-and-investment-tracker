@@ -6,6 +6,8 @@ import { UserDocument } from '../models/User';
 import { Transaction } from '../models/Transaction';
 import { Budget } from '../models/Budget';
 import { Investment } from '../models/Investment';
+import PDFDocument from 'pdfkit';
+import path from 'path';
 
 interface AuthenticatedRequest extends Request {
   user?: UserDocument;
@@ -137,5 +139,98 @@ export const clearUserData = async (req: AuthenticatedRequest, res: Response) =>
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Failed to clear data' });
+  }
+};
+
+export const exportUserData = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?._id;
+
+    const transactions = await Transaction.find({ userId: userId }).sort({ date: 1 });
+    const budgets = await Budget.find({ userId: userId }).sort({ startDate: 1 });
+    const investments = await Investment.find({ userId: userId }).sort({ date: 1 });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="user-data.pdf"');
+
+    const doc = new PDFDocument();
+    doc.pipe(res);
+
+    const fontPath = path.resolve(__dirname, '../font/Courier_Prime/CourierPrime-Regular.ttf');
+    doc.registerFont("CourierPrime", fontPath);
+
+    doc.font("CourierPrime").fontSize(18).text('User Data Export', { align: 'center' });
+    doc.moveDown();
+
+    // Transactions
+    doc.fontSize(14).text('Transactions', { underline: true });
+
+    const getMonthYear = (date: Date) =>
+      `${date.toLocaleString('default', { month: 'long' })} ${date.getFullYear()}`;
+
+    const groupedTransactions: { [key: string]: typeof transactions } = {};
+    transactions.forEach((tx: any) => {
+      const key = getMonthYear(new Date(tx.date));
+      if (!groupedTransactions[key]) groupedTransactions[key] = [];
+      groupedTransactions[key].push(tx);
+    });
+
+
+    Object.entries(groupedTransactions).forEach(([month, txs]) => {
+      doc.fontSize(12).text(`${month}`, { underline: true });
+      txs.forEach((tx: any) => {
+        const date = new Date(tx.date).toDateString();
+        doc.fontSize(12).text(`- ${date} | ${tx.description} | ₹${tx.amount} | ${tx.type}`);
+      });
+      doc.moveDown();
+    });
+
+    doc.addPage();
+
+    // Budgets
+    doc.fontSize(14).text('Budgets', { underline: true });
+
+    const groupedBudgets: { [key: string]: typeof budgets } = {};
+    budgets.forEach((b: any) => {
+      const key = b.startDate ? getMonthYear(new Date(b.startDate)) : 'Unknown';
+      if (!groupedBudgets[key]) groupedBudgets[key] = [];
+      groupedBudgets[key].push(b);
+    });
+
+    Object.entries(groupedBudgets).forEach(([month, bs]) => {
+      doc.fontSize(12).text(`${month}`, { underline: true });
+      bs.forEach((b: any) => {
+        const start = b.startDate ? new Date(b.startDate).toDateString() : 'N/A';
+        const end = b.endDate ? new Date(b.endDate).toDateString() : 'N/A';
+        doc.text(`- ${b.category} | Limit: ₹${b.amount} | Period: ${start} - ${end}`);
+      });
+      doc.moveDown();
+    });
+
+
+    doc.addPage();
+
+    // Investments
+    doc.fontSize(14).text('Investments', { underline: true });
+    
+    const groupedInvestments: { [key: string]: typeof investments } = {};
+    investments.forEach((inv: any) => {
+      const key = inv.date ? getMonthYear(new Date(inv.date)) : 'Unknown';
+      if (!groupedInvestments[key]) groupedInvestments[key] = [];
+      groupedInvestments[key].push(inv);
+    });
+
+    Object.entries(groupedInvestments).forEach(([month, invs]) => {
+      invs.forEach((inv: any) => {
+        const date = inv.date ? new Date(inv.date).toDateString() : 'Unknown Date';
+        doc.fontSize(12).text(`- ${inv.name} | Quantity: ${inv.quantity} | Purchase Price: ₹${inv.purchasePrice} | Current Price: ₹${inv.currentPrice} | Type: ${inv.type} | Purchase Date: ${inv.purchaseDate}`);
+      });
+      doc.moveDown();
+    });
+
+    doc.end();
+  } catch (err: any) {
+    console.log(err);
+    res.status(500).json({ message: 'Failed to export data' });
   }
 };

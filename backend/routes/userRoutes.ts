@@ -5,7 +5,8 @@ import {
   getMe,
   setPassword,
   changePassword,
-  clearUserData
+  clearUserData,
+  exportUserData
 } from '../controllers/userController';
 import { protect } from '../middleware/authMiddleware';
 
@@ -22,5 +23,7 @@ router.post('/set-password', protect, setPassword);
 router.post('/change-password', protect, changePassword);
 
 router.delete('/data', protect, clearUserData);
+
+router.get('/export', protect, exportUserData);
 
 export default router;
