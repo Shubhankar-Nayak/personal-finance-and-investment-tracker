@@ -3,6 +3,7 @@ import {
   registerUser,
   loginUser,
   getMe,
+  sendOtpToEmail,
 } from '../controllers/userController';
 import { googleLogin } from '../controllers/authController';
 import { protect } from '../middleware/authMiddleware';
@@ -20,5 +21,7 @@ router.post('/google', googleLogin);
 
 // Get current logged-in user
 router.get('/me', protect, getMe);
+
+router.post('/send-otp', sendOtpToEmail);
 
 export default router;

@@ -8,6 +8,8 @@ import { Budget } from '../models/Budget';
 import { Investment } from '../models/Investment';
 import PDFDocument from 'pdfkit';
 import path from 'path';
+import crypto from 'crypto';
+import nodemailer from 'nodemailer';
 
 interface AuthenticatedRequest extends Request {
   user?: UserDocument;
@@ -18,9 +20,21 @@ const generateToken = (id: string) => {
 };
 
 export const registerUser = async (req: AuthenticatedRequest, res: Response) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, otp, hash } = req.body;
 
   try {
+    const [hashedOtp, expiresAt] = hash.split('.');
+    if (Date.now() > parseInt(expiresAt)) {
+      return res.status(400).json({ message: 'OTP expired' });
+    }
+
+    const data = `${email}.${otp}.${expiresAt}`;
+    const newHash = crypto.createHmac('sha256', process.env.OTP_SECRET || 'secure-secret').update(data).digest('hex');
+
+    if (newHash !== hashedOtp) {
+      return res.status(401).json({ message: 'Invalid OTP' });
+    }
+
     const userExists = await User.findOne({ email });
     if (userExists) return res.status(400).json({ message: 'User already exists' });
 
@@ -233,4 +247,42 @@ export const exportUserData = async (req: AuthenticatedRequest, res: Response) =
     console.log(err);
     res.status(500).json({ message: 'Failed to export data' });
   }
+};
+
+const otpStore = new Map(); 
+
+export const sendOtpToEmail = async (req: Request, res: Response) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ message: 'Email is required' });
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const expiresAt = Date.now() + 5 * 60 * 1000; // 5 min expiry
+  const data = `${email}.${otp}.${expiresAt}`;
+
+  const hash = crypto
+    .createHmac('sha256', process.env.OTP_SECRET || 'secure-secret')
+    .update(data)
+    .digest('hex');
+
+  const fullHash = `${hash}.${expiresAt}`;
+
+  // Send OTP using nodemailer
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_FROM,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
+
+  const mailOptions = {
+    from: process.env.EMAIL_FROM,
+    to: email,
+    subject: 'OTP for Registration',
+    text: `Your OTP is ${otp}. It is valid for 5 minutes.`,
+  };
+
+  await transporter.sendMail(mailOptions);
+
+  res.status(200).json({ message: 'OTP sent successfully', hash: fullHash });
 };

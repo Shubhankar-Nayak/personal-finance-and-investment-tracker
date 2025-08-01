@@ -251,19 +251,6 @@ const Settings: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <h4 className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                Two-Factor Authentication
-              </h4>
-              <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Add an extra layer of security to your account
-              </p>
-            </div>
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
-              Enable
-            </button>
-          </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                 {user?.hasPassword ? 'Change Password' : 'Set Password'}
               </h4>
               <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>

@@ -26,21 +26,46 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
   const dispatch = useAppDispatch();
   const { loading } = useAppSelector(state => state.auth);
   const { darkMode } = useAppSelector(state => state.ui);
+  const [step, setStep] = useState<'register' | 'verify'>('register');
+  const [emailForVerification, setEmailForVerification] = useState('');
+  const [otp, setOtp] = useState('');
+  const [userName, setUserName] = useState('');
+  const [userEmail, setUserEmail] = useState('');
+  const [userPassword, setUserPassword] = useState('');
+  const [hash, setHash] = useState('');
 
   const { register, handleSubmit, watch, formState: { errors } } = useForm<RegisterFormData>();
   const password = watch('password');
 
   const onSubmit = async (data: RegisterFormData) => {
     try {
-      const { user, token } = await registerUser({
-        name: data.name,
+      const response = await axios.post('/api/auth/send-otp', {
         email: data.email,
-        password: data.password,
       });
-      dispatch(registerAction({ user, token }));
+      setUserName(data.name);
+      setUserEmail(data.email);
+      setUserPassword(data.password);
+      setHash(response.data.hash);
+      setEmailForVerification(data.email);
+      setStep('verify');
     } catch (error: any) {
       console.error('Registration error:', error.response?.data?.message || error.message);
       alert(error.response?.data?.message || 'Registration failed');
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    try {
+      const { user, token } = await registerUser({
+        name: userName,
+        email: userEmail,
+        password: userPassword,
+        otp,
+        hash,
+      });
+      dispatch(registerAction({ user, token }));
+    } catch (error: any) {
+      alert(error.response?.data?.message || 'OTP verification failed');
     }
   };
 
@@ -59,7 +84,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
           </p>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
+        {step === 'register' ? (
+          <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-4">
             <div>
               <label htmlFor="name" className="sr-only">Full name</label>
@@ -248,6 +274,31 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
             </p>
           </div>
         </form>
+        ) : (
+          <div className="mt-8 space-y-4">
+            <p className={`text-center ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+              Enter the OTP sent to <strong>{emailForVerification}</strong>
+            </p>
+            <input
+              type="text"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value.trim())}
+              className={`
+                block w-full p-3 rounded-lg border
+                ${darkMode ? 'bg-gray-800 text-white border-gray-600' : 'bg-white text-gray-900 border-gray-300'}
+              `}
+              placeholder="Enter OTP"
+            />
+            <button
+              type="button"
+              onClick={handleVerifyOtp}
+              className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Verify OTP
+            </button>
+          </div>
+        )}
+        
       </div>
     </div>
   );
