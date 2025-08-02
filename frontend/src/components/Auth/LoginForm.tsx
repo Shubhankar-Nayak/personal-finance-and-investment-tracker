@@ -52,7 +52,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
         callback: async (response: any) => {
           try {
             dispatch(loginStart());
-            const res = await axios.post('/api/auth/google', {
+            const res = await axios.post(`${API}/auth/google`, {
               credential: response.credential,
             });
 

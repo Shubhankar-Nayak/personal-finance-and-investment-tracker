@@ -242,7 +242,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
             <GoogleLogin
               onSuccess={async credentialResponse => {
                 try {
-                  const { data } = await axios.post('/api/auth/google', {
+                  const { data } = await axios.post(`${API}/auth/google`, {
                     credential: credentialResponse.credential,
                   });
 
