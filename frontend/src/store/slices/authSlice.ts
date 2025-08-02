@@ -23,6 +23,8 @@ const initialState: AuthState = {
   loading: false,
 };
 
+const API = import.meta.env.VITE_API_URL;
+
 export const setPassword = createAsyncThunk<
   void,
   { newPassword: string },
@@ -30,7 +32,7 @@ export const setPassword = createAsyncThunk<
 >('auth/setPassword', async ({ newPassword }, { getState, rejectWithValue }) => {
   try {
     const token = getState().auth.token;
-    await axios.post('/api/user/set-password', { newPassword }, {
+    await axios.post(`${API}/user/set-password`, { newPassword }, {
       headers: { Authorization: `Bearer ${token}` },
     });
   } catch (error: any) {
@@ -45,7 +47,7 @@ export const changePassword = createAsyncThunk<
 >('auth/changePassword', async ({ currentPassword, newPassword }, { getState, rejectWithValue }) => {
   try {
     const token = getState().auth.token;
-    await axios.post('/api/user/change-password', { currentPassword, newPassword }, {
+    await axios.post(`${API}/user/change-password`, { currentPassword, newPassword }, {
       headers: { Authorization: `Bearer ${token}` },
     });
   } catch (error: any) {

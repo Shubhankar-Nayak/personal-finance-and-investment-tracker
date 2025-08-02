@@ -6,6 +6,7 @@ import { Moon, Sun, User, Shield, Bell, Database, LogOut, Settings as SettingsIc
 import axios from 'axios';
 
 const Settings: React.FC = () => {
+  const API = import.meta.env.VITE_API_URL;
   const dispatch = useAppDispatch();
   const { darkMode } = useAppSelector(state => state.ui);
   const { user } = useAppSelector(state => state.auth);
@@ -41,7 +42,7 @@ const Settings: React.FC = () => {
       if (!token) throw new Error('You are not logged in.');
 
       const endpoint = isSettingPassword ? 'set-password' : 'change-password';
-      const res = await fetch(`/api/user/${endpoint}`, {
+      const res = await fetch(`${API}/user/${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -76,7 +77,7 @@ const Settings: React.FC = () => {
 
       if (!token) throw new Error('You are not logged in.');
 
-      const res = await fetch('api/user/data', {
+      const res = await fetch(`${API}/user/data`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`
@@ -103,7 +104,7 @@ const Settings: React.FC = () => {
       if (!token) return alert('Not authenticated');
 
       try {
-        const res = await axios.get('/api/user/export', {
+        const res = await axios.get(`${API}/user/export`, {
           headers: {
           Authorization: `Bearer ${token}`,
         },

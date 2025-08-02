@@ -23,6 +23,8 @@ const initialState: InvestmentState = {
   investments: [],
 };
 
+const API = import.meta.env.VITE_API_URL;
+
 export const createInvestment = createAsyncThunk<
   Investment,
   Omit<Investment, 'id' | 'createdAt'>,
@@ -32,7 +34,7 @@ export const createInvestment = createAsyncThunk<
   async (FormData, { getState, rejectWithValue }) => {
     try {
       const token = getState().auth.token;
-      const res = await axios.post('/api/investments', FormData, {
+      const res = await axios.post(`${API}/investments`, FormData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -58,7 +60,7 @@ export const updateInvestment = createAsyncThunk<
   async (investment, { getState, rejectWithValue }) => {
     try {
       const token = getState().auth.token;
-      const res = await axios.put(`/api/investments/${investment.id}`, investment, {
+      const res = await axios.put(`${API}/investments/${investment.id}`, investment, {
         headers: { Authorization: `Bearer ${token}` },
       });
       return res.data.map((t: any) => ({
@@ -80,7 +82,7 @@ export const deleteInvestment = createAsyncThunk<
   async (investmentId, { getState, rejectWithValue }) => {
     try {
       const token = getState().auth.token;
-      await axios.delete(`/api/investments/${investmentId}`, {
+      await axios.delete(`${API}/investments/${investmentId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       return investmentId;
@@ -95,7 +97,7 @@ export const fetchInvestments = createAsyncThunk<Investment[], void, { state: Ro
   async (_, { getState, rejectWithValue }) => {
     try {
       const token = getState().auth.token;
-      const res = await axios.get('/api/investments', {
+      const res = await axios.get(`${API}/investments`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

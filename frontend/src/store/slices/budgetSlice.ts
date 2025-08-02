@@ -25,6 +25,8 @@ const initialState: BudgetState = {
   error: null,
 };
 
+const API = import.meta.env.VITE_API_URL;
+
 export const createBudget = createAsyncThunk<
   BudgetCategory,
   {
@@ -40,7 +42,7 @@ export const createBudget = createAsyncThunk<
   async (formData, { getState, rejectWithValue }) => {
     try {
       const token = getState().auth.token;
-      const res = await axios.post('/api/budget', formData, {
+      const res = await axios.post(`${API}/budget`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -66,7 +68,7 @@ export const updateBudget = createAsyncThunk<
   async (budget, { getState, rejectWithValue}) => {
     try {
       const token = getState().auth.token;
-      const res = await axios.put(`/api/budget/${budget.id}`, budget, {
+      const res = await axios.put(`${API}/budget/${budget.id}`, budget, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -96,7 +98,7 @@ export const deleteBudget = createAsyncThunk<
   async (budgetId, { getState, rejectWithValue}) => {
     try {
       const token = getState().auth.token;
-      await axios.delete(`/api/budget/${budgetId}`, {
+      await axios.delete(`${API}/budget/${budgetId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       return budgetId;
@@ -111,7 +113,7 @@ export const fetchBudget = createAsyncThunk<BudgetCategory[], void, { state: Roo
   async (_, { getState, rejectWithValue }) => {
     try {
       const token = getState().auth.token;
-      const res = await axios.get('/api/budget', {
+      const res = await axios.get(`${API}/budget`, {
         headers: {
           Authorization: `Bearer ${token}`
         },
