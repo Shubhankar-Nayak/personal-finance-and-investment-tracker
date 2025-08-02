@@ -42,6 +42,8 @@ const initialState: TransactionState = {
   error: null,
 };
 
+const API = import.meta.env.VITE_API_URL;
+
 export const createTransaction = createAsyncThunk<
   Transaction,
   Omit<Transaction, 'id' | 'createdAt'>,
@@ -51,7 +53,7 @@ export const createTransaction = createAsyncThunk<
   async (formData, { getState, rejectWithValue }) => {
     try {
       const token = getState().auth.token;
-      const res = await axios.post('/api/transactions', formData, {
+      const res = await axios.post(`${API}/transactions`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -77,7 +79,7 @@ export const updateTransaction = createAsyncThunk<
   async (transaction, { getState, rejectWithValue }) => {
     try {
       const token = getState().auth.token;
-      const res = await axios.put(`/api/transactions/${transaction.id}`, transaction, {
+      const res = await axios.put(`${API}/transactions/${transaction.id}`, transaction, {
         headers: { Authorization: `Bearer ${token}` },
       });
       return res.data.map((t: any) => ({
@@ -99,7 +101,7 @@ export const deleteTransaction = createAsyncThunk<
   async (transactionId, { getState, rejectWithValue }) => {
     try {
       const token = getState().auth.token;
-      await axios.delete(`/api/transactions/${transactionId}`, {
+      await axios.delete(`${API}/transactions/${transactionId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       return transactionId;
@@ -114,7 +116,7 @@ export const fetchTransactions = createAsyncThunk<Transaction[], void, { state: 
   async (_, { getState, rejectWithValue }) => {
     try {
       const token = getState().auth.token;
-      const res = await axios.get('/api/transactions', {
+      const res = await axios.get(`${API}/transactions`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

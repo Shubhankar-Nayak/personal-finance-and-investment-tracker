@@ -21,6 +21,7 @@ interface RegisterFormProps {
 }
 
 const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
+  const API = import.meta.env.VITE_API_URL;
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const dispatch = useAppDispatch();
@@ -39,7 +40,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
 
   const onSubmit = async (data: RegisterFormData) => {
     try {
-      const response = await axios.post('/api/auth/send-otp', {
+      const response = await axios.post(`${API}/auth/send-otp`, {
         email: data.email,
       });
       setUserName(data.name);
