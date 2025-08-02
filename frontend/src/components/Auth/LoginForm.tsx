@@ -22,7 +22,6 @@ interface LoginFormProps {
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
-  const API_BASE_URL = import.meta.env.VITE_API_URL;
   const [showPassword, setShowPassword] = useState(false);
   const dispatch = useAppDispatch();
   const { loading } = useAppSelector(state => state.auth);
@@ -34,7 +33,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
     try {
       dispatch(loginStart());
 
-      const response = await axios.post(`${API_BASE_URL}/auth/login`, data);
+      const response = await axios.post('/api/auth/login', data);
 
       const { user, token } = response.data;
 
