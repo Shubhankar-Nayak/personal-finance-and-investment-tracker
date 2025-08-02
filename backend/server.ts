@@ -17,8 +17,10 @@ connectDB();
 const app = express();
 
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173', 
-  credentials: true, 
+  origin: ['http://localhost:5173', 'https://personal-finance-and-investment-tracker-l0020fsmg.vercel.app'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }));
 
 app.use(express.json());
